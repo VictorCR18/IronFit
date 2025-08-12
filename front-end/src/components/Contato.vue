@@ -34,7 +34,7 @@ function enviarContato() {
         </v-form>
       </v-col>
       <v-col cols="12" md="4">
-        <v-card class="px-4 py-6" variant="tonal">
+        <v-card class="px-4 py-6 text-nowrap" variant="tonal">
           <v-card-title class="text-h6 px-0 mx-0">Endereço</v-card-title>
           <v-card-subtitle class="px-0 mx-0"
             >Rua Exemplo, 123 — Centro, Sua Cidade</v-card-subtitle
@@ -48,3 +48,10 @@ function enviarContato() {
     </v-row>
   </v-card>
 </template>
+<style scoped>
+.text-nowrap {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+</style>
