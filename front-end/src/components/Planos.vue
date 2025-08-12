@@ -24,7 +24,7 @@ const planos = [
       <v-card-title class="text-h5 font-weight-bold pa-0 ma-0">Planos</v-card-title>
     </v-col>
     <v-col cols="12" md="4" v-for="p in planos" :key="p.nome">
-      <v-card class="text-center pa-4">
+      <v-card class="text-center pa-4 text-nowrap">
         <v-card-title>{{ p.nome }}</v-card-title>
         <v-card-text class="text-h5 font-weight-bold ma-0 pa-0 ">{{ p.preco }}</v-card-text>
         <v-card-subtitle>{{ p.descricao }}</v-card-subtitle>
@@ -35,3 +35,10 @@ const planos = [
     </v-col>
   </v-row>
 </template>
+<style scoped>
+.text-nowrap {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+</style>
