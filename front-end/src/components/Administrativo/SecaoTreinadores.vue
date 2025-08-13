@@ -4,13 +4,10 @@ import CrudTable from "@/components/Administrativo/CrudTable.vue";
 import type { Treinador } from "@/types/types";
 import { TreinadorService } from "@/api/services/TreinadorService";
 
-// Serviço
 const treinadorService = new TreinadorService();
 
-// State
 const treinadores = ref<Treinador[]>([]);
 
-// Buscar todos os treinadores
 async function buscarTreinadores() {
   try {
     treinadores.value = await treinadorService.list();
@@ -19,18 +16,31 @@ async function buscarTreinadores() {
   }
 }
 
-// Adicionar treinador
-async function adicionarTreinador(item: Treinador) {
+async function salvarTreinador(item: Treinador) {
   try {
-    console.log(item);
-    const response = await treinadorService.create(item);
-    treinadores.value.push(response); // adiciona na lista local
+    let treinadorSalvo: Treinador;
+    if (item.id) {
+      treinadorSalvo = await treinadorService.update(item, item.id);
+      const idx = treinadores.value.findIndex((t) => t.id === item.id);
+      if (idx !== -1) treinadores.value[idx] = treinadorSalvo;
+    } else {
+      treinadorSalvo = await treinadorService.create(item);
+      treinadores.value.push(treinadorSalvo);
+    }
   } catch (error) {
-    console.error("Erro ao adicionar treinador:", error);
+    console.error("Erro ao salvar treinador:", error);
   }
 }
 
-// Montar componente
+async function deletarTreinador(id: number) {
+  try {
+    await treinadorService.delete(id);
+    treinadores.value = treinadores.value.filter((t) => t.id !== id);
+  } catch (error) {
+    console.error("Erro ao excluir treinador:", error);
+  }
+}
+
 onMounted(() => {
   buscarTreinadores();
 });
@@ -41,13 +51,14 @@ onMounted(() => {
     title="Treinadores"
     :headers="[
       { title: 'Nome', key: 'nome' },
-      { title: 'Especialidade', key: 'especialidade' },
+      { title: 'Especialidade', key: 'especialidade' }
     ]"
     :items="treinadores"
     :fields="[
       { label: 'Nome', key: 'nome' },
-      { label: 'Especialidade', key: 'especialidade' },
+      { label: 'Especialidade', key: 'especialidade' }
     ]"
-    @save="adicionarTreinador"
+    @save="salvarTreinador"
+    @delete="deletarTreinador"
   />
 </template>

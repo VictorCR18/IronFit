@@ -35,4 +35,15 @@ public class PlanoController {
     public void deletar(@PathVariable Long id) {
         repository.deleteById(id);
     }
+
+    @PutMapping("/{id}")
+    public Plano atualizar(@PathVariable Long id, @RequestBody Plano planoAtualizado) {
+        return repository.findById(id).map(plano -> {
+            plano.setNome(planoAtualizado.getNome());
+            plano.setPreco(planoAtualizado.getPreco());
+            plano.setDescricao(planoAtualizado.getDescricao());
+            return repository.save(plano);
+        }).orElseThrow();
+    }
+
 }

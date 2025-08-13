@@ -35,4 +35,14 @@ public class TreinadorController {
     public void deletar(@PathVariable Long id) {
         repository.deleteById(id);
     }
+
+    @PutMapping("/{id}")
+    public Treinador atualizar(@PathVariable Long id, @RequestBody Treinador treinadorAtualizado) {
+        return repository.findById(id).map(treinador -> {
+            treinador.setNome(treinadorAtualizado.getNome());
+            treinador.setEspecialidade(treinadorAtualizado.getEspecialidade());
+            return repository.save(treinador);
+        }).orElseThrow();
+    }
+
 }

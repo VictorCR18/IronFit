@@ -10,6 +10,7 @@ export interface Aluno {
   email: string;
   contato: string;
   plano: Plano | null;
+  pagamento?: boolean;
 }
 
 export interface Treinador {
@@ -28,7 +29,7 @@ export interface Plano {
 export interface Field {
   label: string;
   key: string;
-  type?: "text" | "select";
+  type?: "text" | "select" | "checkbox" | "date" | "number";
   options?: { id: number; nome: string }[];
   optionLabel?: string;
   optionValue?: string;

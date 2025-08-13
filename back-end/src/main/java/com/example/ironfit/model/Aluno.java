@@ -26,4 +26,6 @@ public class Aluno {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "plano_id")
     private Plano plano;
+
+    private boolean pagamento;
 }

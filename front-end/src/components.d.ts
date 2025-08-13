@@ -9,6 +9,7 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     AlunosTabela: typeof import('./components/Administrativo/AlunosTabela.vue')['default']
+    ConfirmDialog: typeof import('./components/Administrativo/ConfirmDialog.vue')['default']
     Contato: typeof import('./components/LandingPage/Contato.vue')['default']
     CrudTable: typeof import('./components/Administrativo/CrudTable.vue')['default']
     Matricula: typeof import('./components/LandingPage/Matricula.vue')['default']

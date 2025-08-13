@@ -15,13 +15,11 @@ public class AlunoController {
     @Autowired
     private AlunoRepository alunoRepository;
 
-    // Listar todos os alunos
     @GetMapping
     public List<Aluno> listar() {
         return alunoRepository.findAll();
     }
 
-    // Buscar aluno por id
     @GetMapping("/{id}")
     public ResponseEntity<Aluno> buscar(@PathVariable Long id) {
         return alunoRepository.findById(id)
@@ -29,13 +27,11 @@ public class AlunoController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // Criar novo aluno
     @PostMapping
     public Aluno criar(@RequestBody Aluno aluno) {
         return alunoRepository.save(aluno);
     }
 
-    // Atualizar aluno existente
     @PutMapping("/{id}")
     public ResponseEntity<Aluno> atualizar(@PathVariable Long id, @RequestBody Aluno alunoAtualizado) {
         return alunoRepository.findById(id).map(aluno -> {
@@ -43,12 +39,12 @@ public class AlunoController {
             aluno.setEmail(alunoAtualizado.getEmail());
             aluno.setContato(alunoAtualizado.getContato());
             aluno.setPlano(alunoAtualizado.getPlano());
+            aluno.setPagamento(alunoAtualizado.isPagamento());
             alunoRepository.save(aluno);
             return ResponseEntity.ok(aluno);
         }).orElse(ResponseEntity.notFound().build());
     }
 
-    // Deletar aluno
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletar(@PathVariable Long id) {
         return alunoRepository.findById(id).map(aluno -> {

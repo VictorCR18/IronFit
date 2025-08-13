@@ -4,32 +4,42 @@ import CrudTable from "@/components/Administrativo/CrudTable.vue";
 import { PlanoService } from "@/api/services/PlanoService";
 import type { Plano } from "@/types/types";
 
-// Instância do serviço
 const planoService = new PlanoService();
-
-// State
 const planos = ref<Plano[]>([]);
 
-// Carregar todos os planos
 async function carregarPlanos() {
   try {
-    planos.value = await planoService.list(); // método correto do CrudService
+    planos.value = await planoService.list();
   } catch (error) {
     console.error("Erro ao carregar planos:", error);
   }
 }
 
-// Adicionar um novo plano
-async function adicionarPlano(novoPlano: Plano) {
+async function salvarPlano(plano: Plano) {
   try {
-    const planoCriado = await planoService.create(novoPlano);
-    planos.value.push(planoCriado);
+    let planoSalvo: Plano;
+    if (plano.id) {
+      planoSalvo = await planoService.update(plano, plano.id);
+      const index = planos.value.findIndex(p => p.id === plano.id);
+      if (index !== -1) planos.value[index] = planoSalvo;
+    } else {
+      planoSalvo = await planoService.create(plano);
+      planos.value.push(planoSalvo);
+    }
   } catch (error) {
-    console.error("Erro ao adicionar plano:", error);
+    console.error("Erro ao salvar plano:", error);
   }
 }
 
-// Montar componente
+async function deletarPlano(id: number) {
+  try {
+    await planoService.delete(id);
+    planos.value = planos.value.filter(p => p.id !== id);
+  } catch (error) {
+    console.error("Erro ao deletar plano:", error);
+  }
+}
+
 onMounted(() => {
   carregarPlanos();
 });
@@ -40,13 +50,16 @@ onMounted(() => {
     title="Planos"
     :headers="[
       { title: 'Plano', key: 'nome' },
-      { title: 'Preço', key: 'preco' }
+      { title: 'Preço', key: 'preco' },
+      { title: 'Descrição', key: 'descricao' }
     ]"
     :items="planos"
     :fields="[
       { label: 'Nome do Plano', key: 'nome' },
-      { label: 'Preço', key: 'preco' }
+      { label: 'Preço', key: 'preco' },
+      { label: 'Descrição', key: 'descricao' }
     ]"
-    @save="adicionarPlano"
+    @save="salvarPlano"
+    @delete="deletarPlano"
   />
 </template>

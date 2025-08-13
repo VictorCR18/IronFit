@@ -13,7 +13,7 @@ export class CrudService<T> implements CrudAdapters<T> {
   }
 
   async update(objeto: T, id: number): Promise<T> {
-    const { data } = await httpClient.patch(`${this.url}/${id}`, objeto);
+    const { data } = await httpClient.put(`${this.url}/${id}`, objeto);
     return data;
   }
 

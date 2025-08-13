@@ -1,19 +1,41 @@
-<script setup></script>
+<script lang="ts" setup>
+import { PlanoService } from "@/api/services/PlanoService";
+import type { Plano } from "@/types/types";
+import { onMounted, ref } from "vue";
+
+const planoService = new PlanoService();
+const planos = ref<Plano[]>([]);
+const erro = ref(false);
+
+async function carregarPlanos() {
+  try {
+    planos.value = await planoService.list();
+    if (planos.value.length === 0) erro.value = true;
+  } catch (e) {
+    console.error("Erro ao carregar planos:", e);
+    erro.value = true;
+  }
+}
+
+onMounted(() => {
+  carregarPlanos();
+});
+</script>
 
 <template>
   <v-row class="my-10" align="center">
     <v-col cols="12" md="8">
       <v-card class="pa-6">
         <v-card-title
-        class="text-h4 font-weight-bold"
+          class="text-h4 font-weight-bold"
           :style="{
             whiteSpace: 'normal',
             overflow: 'visible',
             textOverflow: 'clip',
           }"
         >
-          Alcance sua melhor versão —<br/> Treinos personalizados e estrutura
-          completa
+          Alcance sua melhor versão —<br />
+          Treinos personalizados e estrutura completa
         </v-card-title>
 
         <v-card-subtitle
@@ -32,7 +54,9 @@
             <v-btn variant="elevated" color="primary" class="mr-2"
               >Teste Grátis 7 dias</v-btn
             >
-            <v-btn  class="border-sm" color="secondary" to="#planos">Ver Planos</v-btn>
+            <v-btn class="border-sm" color="secondary" to="#planos"
+              >Ver Planos</v-btn
+            >
           </v-row>
         </v-card-actions>
         <row class="d-flex ga-3 ml-2">
@@ -41,9 +65,7 @@
           <v-chip color="secondary">App para treinos</v-chip>
         </row>
         <row class="flex-column">
-          <v-card-text class="text-start">
-            Horários Populares
-          </v-card-text>
+          <v-card-text class="text-start"> Horários Populares </v-card-text>
           <div class="d-flex ga-3 ml-2">
             <v-chip color="secondary">06:00 - 07:30</v-chip>
             <v-chip color="secondary">12:00 - 13:30</v-chip>
@@ -54,8 +76,10 @@
     </v-col>
     <v-col cols="12" md="4">
       <v-card class="pa-6">
-        <v-card-title class="ml-n4">Plano Popular</v-card-title>
-        <v-card-subtitle class="ml-n4">R$ 129/mês</v-card-subtitle>
+        <v-card-title class="ml-n4">Plano {{ planos[1]?.nome }}</v-card-title>
+        <v-card-subtitle class="ml-n4"
+          >R$ {{ planos[1]?.preco }}/mês</v-card-subtitle
+        >
         <v-card-text>
           <ul>
             <li>Treinos ilimitados</li>
