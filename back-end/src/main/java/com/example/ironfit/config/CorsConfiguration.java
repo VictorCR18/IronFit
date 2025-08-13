@@ -1,14 +1,18 @@
 package com.example.ironfit.config;
+
+import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-public class CorsConfiguration {
+@Configuration
+public class CorsConfiguration implements WebMvcConfigurer {
 
+    @Override
     public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/localhost:3000/**")
-                .allowedOrigins("*") 
+        registry.addMapping("/**")
+                .allowedOrigins("http://localhost:3000")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                .allowedHeaders("*") 
+                .allowedHeaders("*")
                 .allowCredentials(true);
     }
-    
 }

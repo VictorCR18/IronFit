@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/treinadores")
+@RequestMapping("/api/treinador")
 public class TreinadorController {
 
     private final TreinadorRepository repository;

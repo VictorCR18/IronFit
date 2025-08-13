@@ -9,12 +9,21 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "treinadores")
-public class Treinador {
+@Table(name = "alunos")
+public class Aluno {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String nome;
-    private String especialidade;
+
+    @Column(unique = true)
+    private String email;
+
+    private String contato;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "plano_id")
+    private Plano plano;
 }

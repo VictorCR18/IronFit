@@ -8,14 +8,20 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
-    Contato: typeof import('./components/Contato.vue')['default']
-    Matricula: typeof import('./components/Matricula.vue')['default']
-    NavBar: typeof import('./components/NavBar.vue')['default']
-    Planos: typeof import('./components/Planos.vue')['default']
-    Principal: typeof import('./components/Principal.vue')['default']
+    AlunosTabela: typeof import('./components/Administrativo/AlunosTabela.vue')['default']
+    Contato: typeof import('./components/LandingPage/Contato.vue')['default']
+    CrudTable: typeof import('./components/Administrativo/CrudTable.vue')['default']
+    Matricula: typeof import('./components/LandingPage/Matricula.vue')['default']
+    NavBar: typeof import('./components/LandingPage/NavBar.vue')['default']
+    Planos: typeof import('./components/LandingPage/Planos.vue')['default']
+    Principal: typeof import('./components/LandingPage/Principal.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
-    Sobre: typeof import('./components/Sobre.vue')['default']
-    Treinadores: typeof import('./components/Treinadores.vue')['default']
+    SecaoAluno: typeof import('./components/Administrativo/SecaoAluno.vue')['default']
+    SecaoPlanos: typeof import('./components/Administrativo/SecaoPlanos.vue')['default']
+    SecaoTreinadores: typeof import('./components/Administrativo/SecaoTreinadores.vue')['default']
+    SideBar: typeof import('./components/Administrativo/SideBar.vue')['default']
+    Sobre: typeof import('./components/LandingPage/Sobre.vue')['default']
+    Treinadores: typeof import('./components/LandingPage/Treinadores.vue')['default']
   }
 }

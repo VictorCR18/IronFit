@@ -1,11 +1,11 @@
 <script setup>
-import NavBar from "@/components/NavBar.vue";
-import Sobre from "@/components/Sobre.vue";
-import Treinadores from "@/components/Treinadores.vue";
-import Planos from "@/components/Planos.vue";
-import Matricula from "@/components/Matricula.vue";
-import Contato from "@/components/Contato.vue";
-import Principal from "@/components/Principal.vue";
+import NavBar from "@/components/LandingPage/NavBar.vue";
+import Sobre from "@/components/LandingPage/Sobre.vue";
+import Treinadores from "@/components/LandingPage/Treinadores.vue";
+import Planos from "@/components/LandingPage/Planos.vue";
+import Matricula from "@/components/LandingPage/Matricula.vue";
+import Contato from "@/components/LandingPage/Contato.vue";
+import Principal from "@/components/LandingPage/Principal.vue";
 </script>
 
 <template>

@@ -1,12 +1,24 @@
-/**
- * router/index.ts
- *
- * Automatic routes for `./src/pages/*.vue`
- */
+import { createRouter, createWebHistory } from 'vue-router'
 
-// Composables
-import { createRouter, createWebHistory } from 'vue-router/auto'
-import { routes } from 'vue-router/auto-routes'
+// Definindo rotas manualmente, todas em um único arquivo
+const routes = [
+  {
+    path: '/',
+    name: 'LandingPage',
+    component: () => import('@/pages/LandingPage.vue'),
+    meta: {
+      title: 'Página Inicial',
+    },
+  },
+  {
+    path: '/administrativo',
+    name: 'Administrativo',
+    component: () => import('@/pages/Administrativo.vue'),
+    meta: {
+      title: 'Painel Administrativo',
+    },
+  }
+]
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -22,7 +34,7 @@ const router = createRouter({
   },
 })
 
-// Workaround for https://github.com/vitejs/vite/issues/11804
+// Workaround para erro de import dinâmico no Vite
 router.onError((err, to) => {
   if (err?.message?.includes?.('Failed to fetch dynamically imported module')) {
     if (localStorage.getItem('vuetify:dynamic-reload')) {
