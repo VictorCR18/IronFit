@@ -1,51 +1,86 @@
 <script lang="ts" setup>
 import type { Props } from "@/types/types";
 import ConfirmDialog from "@/components/Administrativo/ConfirmDialog.vue";
-import { ref, reactive } from "vue";
+import { ref, computed } from "vue";
+import { z, ZodError } from "zod";
 
 const props = defineProps<Props>();
 const emit = defineEmits<{
   (e: "save", item: any): void;
   (e: "delete", id: number): void;
-  (e: "toggle-checkbox", item: any): void;
 }>();
 
 const dialog = ref(false);
 const editando = ref(false);
-
 const dialogDelete = ref(false);
 const idParaExcluir = ref<number | null>(null);
+let itemOriginalId: any = null;
 
-const novoItem = reactive<any>({}); // reativo
+const formState = ref<Record<string, any>>({});
+const formErrors = ref<Record<string, string[] | undefined>>({});
 
-function abrirEdicao(item: any) {
-  Object.keys(novoItem).forEach((key) => delete novoItem[key]);
-  Object.assign(novoItem, item);
+const formSchema = computed(() => {
+  const shape: Record<string, z.ZodTypeAny> = {};
   props.fields.forEach((field) => {
-    if (field.type === "checkbox") {
-      novoItem[field.key] = !!novoItem[field.key];
+    if (field.validation) {
+      shape[field.key] = field.validation;
     }
   });
+  return z.object(shape);
+});
 
+function onFormSubmit() {
+  try {
+    formSchema.value.parse(formState.value);
+
+    formErrors.value = {};
+    const itemParaSalvar = editando.value
+      ? { ...formState.value, id: itemOriginalId }
+      : formState.value;
+
+    emit("save", itemParaSalvar);
+    dialog.value = false;
+  } catch (error) {
+    if (error instanceof ZodError) {
+      formErrors.value = error.flatten().fieldErrors;
+    }
+  }
+}
+
+function abrirEdicao(item: any) {
   editando.value = true;
+  itemOriginalId = item.id;
+  formErrors.value = {}; 
+
+  const initialValues: Record<string, any> = { ...item };
+  if (typeof item.plano === "object" && item.plano !== null) {
+    initialValues.plano = item.plano.id;
+  }
+  formState.value = initialValues; 
   dialog.value = true;
 }
 
 function abrirAdicionar() {
-  Object.keys(novoItem).forEach((key) => delete novoItem[key]);
-  props.fields.forEach((field) => {
-    if (field.type === "checkbox") novoItem[field.key] = false;
-    else novoItem[field.key] = "";
-  });
   editando.value = false;
+  itemOriginalId = null;
+  formErrors.value = {};
+
+  const initialState: Record<string, any> = {};
+  props.fields.forEach((field) => {
+    if (field.type === "checkbox") {
+      initialState[field.key] = false;
+    } else if (field.type === "select") {
+      initialState[field.key] = null;
+    } else {
+      initialState[field.key] = "";
+    }
+  });
+  formState.value = initialState;
   dialog.value = true;
 }
 
-function salvar() {
-  emit("save", { ...novoItem });
-  Object.keys(novoItem).forEach((key) => delete novoItem[key]);
+function fecharDialog() {
   dialog.value = false;
-  editando.value = false;
 }
 
 function abrirConfirmacaoExclusao(id: number) {
@@ -57,7 +92,7 @@ function confirmarExclusao() {
   if (idParaExcluir.value != null) {
     emit("delete", idParaExcluir.value);
   }
-  idParaExcluir.value = null;
+  dialogDelete.value = false;
 }
 </script>
 
@@ -85,12 +120,12 @@ function confirmarExclusao() {
         </v-btn>
       </v-toolbar>
     </template>
-
-    <template #item.pagamento="{ item }">
-      {{ item.pagamento ? "Sim" : "Não" }}
+    <template #[`item.pagamento`]="{ item }">
+      <v-chip :color="item.pagamento ? 'green' : 'red'" size="small">
+        {{ item.pagamento ? "Sim" : "Não" }}
+      </v-chip>
     </template>
-
-    <template #item.actions="{ item }">
+    <template #[`item.actions`]="{ item }">
       <v-btn
         icon="mdi-pencil"
         color="primary"
@@ -106,46 +141,58 @@ function confirmarExclusao() {
     </template>
   </v-data-table>
 
-  <v-dialog v-model="dialog" max-width="500px">
-    <v-card class="py-4">
-      <v-card-title>
-        {{ editando ? "Editar" : "Adicionar" }}
-        {{ props.title.slice(0, -1) }}
-      </v-card-title>
-      <v-card-text>
-        <template v-for="field in props.fields" :key="field.key">
-          <v-select
-            v-if="field.type === 'select'"
-            :label="field.label"
-            :items="field.options"
-            :item-title="field.optionLabel"
-            :item-value="field.optionValue"
-            v-model="novoItem[field.key]"
-            variant="outlined"
-          />
-          <v-checkbox
-            v-else-if="field.type === 'checkbox'"
-            :label="field.label"
-            v-model="novoItem[field.key]"
-          />
-
-          <v-text-field
-            v-else
-            :label="field.label"
-            :type="field.type || 'text'"
-            v-model="novoItem[field.key]"
-            variant="outlined"
-          />
-        </template>
-      </v-card-text>
-      <v-card-actions class="px-6">
-        <v-spacer></v-spacer>
-        <v-btn text @click="dialog = false">Cancelar</v-btn>
-        <v-btn variant="elevated" class="px-4" color="primary" @click="salvar">
-          Salvar
-        </v-btn>
-      </v-card-actions>
-    </v-card>
+  <v-dialog v-model="dialog" max-width="600px" persistent>
+    <v-form @submit.prevent="onFormSubmit">
+      <v-card class="py-4">
+        <v-card-title>
+          <span class="text-h5">
+            {{ editando ? "Editar" : "Adicionar" }}
+            {{ props.title.slice(0, -1) }}
+          </span>
+        </v-card-title>
+        <v-card-text>
+          <v-container>
+            <v-row>
+              <template v-for="field in props.fields" :key="field.key">
+                <v-col cols="12">
+                  <v-select
+                    v-if="field.type === 'select'"
+                    :label="field.label"
+                    :items="field.options"
+                    :item-title="field.optionLabel"
+                    :item-value="field.optionValue"
+                    v-model="formState[field.key]"
+                    :error-messages="formErrors[field.key]"
+                    variant="outlined"
+                  />
+                  <v-checkbox
+                    v-else-if="field.type === 'checkbox'"
+                    :label="field.label"
+                    v-model="formState[field.key]"
+                    :error-messages="formErrors[field.key]"
+                  />
+                  <v-text-field
+                    v-else
+                    :label="field.label"
+                    :type="field.type || 'text'"
+                    v-model="formState[field.key]"
+                    :error-messages="formErrors[field.key]"
+                    variant="outlined"
+                  />
+                </v-col>
+              </template>
+            </v-row>
+          </v-container>
+        </v-card-text>
+        <v-card-actions class="px-6">
+          <v-spacer></v-spacer>
+          <v-btn text @click="fecharDialog">Cancelar</v-btn>
+          <v-btn variant="elevated" class="px-4" color="primary" type="submit">
+            Salvar
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-form>
   </v-dialog>
 
   <ConfirmDialog

@@ -1,3 +1,5 @@
+import type z from "zod";
+
 export interface Notificacao {
   mensagem: string;
   tipoMensagem: string;
@@ -9,7 +11,7 @@ export interface Aluno {
   nome: string;
   email: string;
   contato: string;
-  plano: Plano | null;
+  plano: Plano | number;
   pagamento?: boolean;
 }
 
@@ -33,6 +35,7 @@ export interface Field {
   options?: { id: number; nome: string }[];
   optionLabel?: string;
   optionValue?: string;
+  validation?: z.ZodTypeAny;
 }
 
 export interface Header {

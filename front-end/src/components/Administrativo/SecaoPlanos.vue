@@ -2,7 +2,8 @@
 import { ref, onMounted } from "vue";
 import CrudTable from "@/components/Administrativo/CrudTable.vue";
 import { PlanoService } from "@/api/services/PlanoService";
-import type { Plano } from "@/types/types";
+import type { Plano, Field } from "@/types/types"; 
+import { z } from "zod";
 
 const planoService = new PlanoService();
 const planos = ref<Plano[]>([]);
@@ -20,7 +21,7 @@ async function salvarPlano(plano: Plano) {
     let planoSalvo: Plano;
     if (plano.id) {
       planoSalvo = await planoService.update(plano, plano.id);
-      const index = planos.value.findIndex(p => p.id === plano.id);
+      const index = planos.value.findIndex((p) => p.id === plano.id);
       if (index !== -1) planos.value[index] = planoSalvo;
     } else {
       planoSalvo = await planoService.create(plano);
@@ -34,15 +35,41 @@ async function salvarPlano(plano: Plano) {
 async function deletarPlano(id: number) {
   try {
     await planoService.delete(id);
-    planos.value = planos.value.filter(p => p.id !== id);
+    planos.value = planos.value.filter((p) => p.id !== id);
   } catch (error) {
     console.error("Erro ao deletar plano:", error);
   }
 }
 
-onMounted(() => {
-  carregarPlanos();
+onMounted(async () => {
+  await carregarPlanos();
 });
+
+const tableFields: Field[] = [
+  {
+    label: "Nome do Plano",
+    key: "nome",
+    validation: z
+      .string({ required_error: "O nome do plano é obrigatório." })
+      .min(3, "O nome deve ter no mínimo 3 caracteres."),
+  },
+  {
+    label: "Preço",
+    key: "preco",
+    type: "number",
+    validation: z.coerce 
+      .number({
+        required_error: "O preço é obrigatório.",
+        invalid_type_error: "Digite um preço válido.",
+      })
+      .positive("O preço deve ser um valor positivo."),
+  },
+  {
+    label: "Descrição",
+    key: "descricao",
+    validation: z.string().optional(), 
+  },
+];
 </script>
 
 <template>
@@ -51,14 +78,10 @@ onMounted(() => {
     :headers="[
       { title: 'Plano', key: 'nome' },
       { title: 'Preço', key: 'preco' },
-      { title: 'Descrição', key: 'descricao' }
+      { title: 'Descrição', key: 'descricao' },
     ]"
     :items="planos"
-    :fields="[
-      { label: 'Nome do Plano', key: 'nome' },
-      { label: 'Preço', key: 'preco' },
-      { label: 'Descrição', key: 'descricao' }
-    ]"
+    :fields="tableFields"
     @save="salvarPlano"
     @delete="deletarPlano"
   />

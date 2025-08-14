@@ -1,11 +1,11 @@
 <script lang="ts" setup>
 import { ref, onMounted } from "vue";
 import CrudTable from "@/components/Administrativo/CrudTable.vue";
-import type { Treinador } from "@/types/types";
+import type { Treinador, Field } from "@/types/types";
 import { TreinadorService } from "@/api/services/TreinadorService";
+import { z } from "zod";
 
 const treinadorService = new TreinadorService();
-
 const treinadores = ref<Treinador[]>([]);
 
 async function buscarTreinadores() {
@@ -41,9 +41,26 @@ async function deletarTreinador(id: number) {
   }
 }
 
-onMounted(() => {
-  buscarTreinadores();
+onMounted(async () => {
+  await buscarTreinadores();
 });
+
+const tableFields: Field[] = [
+  {
+    label: "Nome",
+    key: "nome",
+    validation: z
+      .string({ required_error: "O nome é obrigatório." })
+      .min(3, "O nome deve ter no mínimo 3 caracteres."),
+  },
+  {
+    label: "Especialidade",
+    key: "especialidade",
+    validation: z
+      .string({ required_error: "A especialidade é obrigatória." })
+      .min(3, "A especialidade deve ter no mínimo 3 caracteres."),
+  },
+];
 </script>
 
 <template>
@@ -51,13 +68,10 @@ onMounted(() => {
     title="Treinadores"
     :headers="[
       { title: 'Nome', key: 'nome' },
-      { title: 'Especialidade', key: 'especialidade' }
+      { title: 'Especialidade', key: 'especialidade' },
     ]"
     :items="treinadores"
-    :fields="[
-      { label: 'Nome', key: 'nome' },
-      { label: 'Especialidade', key: 'especialidade' }
-    ]"
+    :fields="tableFields"
     @save="salvarTreinador"
     @delete="deletarTreinador"
   />
