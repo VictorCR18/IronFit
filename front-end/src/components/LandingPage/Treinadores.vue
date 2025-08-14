@@ -12,7 +12,7 @@ async function buscarTreinadores() {
   try {
     treinadores.value = await treinadorService.list();
     if (treinadores.value.length === 0) {
-      erro.value = true; // nenhum treinador retornado
+      erro.value = true;
     }
   } catch (e) {
     console.error("Erro ao buscar treinadores:", e);
