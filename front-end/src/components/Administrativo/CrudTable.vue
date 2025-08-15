@@ -26,6 +26,8 @@ const dialogDelete = ref(false);
 const idParaExcluir = ref<number | null>(null);
 let itemOriginalId: any = null;
 
+const search = ref("");
+
 const formState = ref<Record<string, any>>({});
 const formErrors = ref<Record<string, string[] | undefined>>({});
 
@@ -41,7 +43,6 @@ const formSchema = computed(() => {
 
 function onFormSubmit() {
   try {
-    // Não vamos aplicar unformatter — salva exatamente o que o usuário digitou
     formSchema.value.parse(formState.value);
 
     formErrors.value = {};
@@ -115,6 +116,7 @@ function confirmarExclusao() {
     ]"
     :items="props.items"
     :loading="props.loading"
+    :search="search"
     class="elevation-1"
     density="comfortable"
   >
@@ -122,6 +124,17 @@ function confirmarExclusao() {
       <v-toolbar flat>
         <v-toolbar-title>{{ props.title }}</v-toolbar-title>
         <v-spacer></v-spacer>
+        <v-text-field
+          v-model="search"
+          label="Buscar"
+          prepend-inner-icon="mdi-magnify"
+          variant="outlined"
+          density="compact"
+          hide-details
+          clearable
+          class="mr-4"
+        />
+
         <v-btn
           variant="elevated"
           class="mr-4"
