@@ -51,7 +51,7 @@ const tableFields: Field[] = [
     key: "nome",
     validation: z
       .string({ required_error: "O nome do plano é obrigatório." })
-      .min(3, "O nome deve ter no mínimo 3 caracteres."),
+      .min(1, "O nome deve ter no mínimo 1 caracteres."),
   },
   {
     label: "Preço",

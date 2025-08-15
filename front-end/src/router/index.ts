@@ -1,6 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
-// Definindo rotas manualmente, todas em um único arquivo
 const routes = [
   {
     path: '/',
@@ -34,7 +33,6 @@ const router = createRouter({
   },
 })
 
-// Workaround para erro de import dinâmico no Vite
 router.onError((err, to) => {
   if (err?.message?.includes?.('Failed to fetch dynamically imported module')) {
     if (localStorage.getItem('vuetify:dynamic-reload')) {

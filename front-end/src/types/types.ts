@@ -36,6 +36,8 @@ export interface Field {
   optionLabel?: string;
   optionValue?: string;
   validation?: z.ZodTypeAny;
+  formatter?: (val: string) => string;
+  unformatter?: (val: string) => string;
 }
 
 export interface Header {
@@ -48,4 +50,5 @@ export interface Props {
   headers: Header[];
   items: any[];
   fields: Field[];
+  loading?: boolean;
 }

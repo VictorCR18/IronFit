@@ -51,14 +51,14 @@ const tableFields: Field[] = [
     key: "nome",
     validation: z
       .string({ required_error: "O nome é obrigatório." })
-      .min(3, "O nome deve ter no mínimo 3 caracteres."),
+      .min(1, "O nome deve ter no mínimo 1 caracteres."),
   },
   {
     label: "Especialidade",
     key: "especialidade",
     validation: z
       .string({ required_error: "A especialidade é obrigatória." })
-      .min(3, "A especialidade deve ter no mínimo 3 caracteres."),
+      .min(1, "A especialidade deve ter no mínimo 1 caracteres."),
   },
 ];
 </script>

@@ -4,7 +4,17 @@ import ConfirmDialog from "@/components/Administrativo/ConfirmDialog.vue";
 import { ref, computed } from "vue";
 import { z, ZodError } from "zod";
 
-const props = defineProps<Props>();
+const props = withDefaults(
+  defineProps<
+    Props & {
+      loading?: boolean;
+    }
+  >(),
+  {
+    loading: false,
+  }
+);
+
 const emit = defineEmits<{
   (e: "save", item: any): void;
   (e: "delete", id: number): void;
@@ -31,6 +41,7 @@ const formSchema = computed(() => {
 
 function onFormSubmit() {
   try {
+    // Não vamos aplicar unformatter — salva exatamente o que o usuário digitou
     formSchema.value.parse(formState.value);
 
     formErrors.value = {};
@@ -50,13 +61,13 @@ function onFormSubmit() {
 function abrirEdicao(item: any) {
   editando.value = true;
   itemOriginalId = item.id;
-  formErrors.value = {}; 
+  formErrors.value = {};
 
   const initialValues: Record<string, any> = { ...item };
   if (typeof item.plano === "object" && item.plano !== null) {
     initialValues.plano = item.plano.id;
   }
-  formState.value = initialValues; 
+  formState.value = initialValues;
   dialog.value = true;
 }
 
@@ -103,6 +114,7 @@ function confirmarExclusao() {
       { title: 'Ações', key: 'actions', sortable: false, align: 'center' },
     ]"
     :items="props.items"
+    :loading="props.loading"
     class="elevation-1"
     density="comfortable"
   >
@@ -120,11 +132,13 @@ function confirmarExclusao() {
         </v-btn>
       </v-toolbar>
     </template>
+
     <template #[`item.pagamento`]="{ item }">
       <v-chip :color="item.pagamento ? 'green' : 'red'" size="small">
         {{ item.pagamento ? "Sim" : "Não" }}
       </v-chip>
     </template>
+
     <template #[`item.actions`]="{ item }">
       <v-btn
         icon="mdi-pencil"
@@ -178,6 +192,12 @@ function confirmarExclusao() {
                     v-model="formState[field.key]"
                     :error-messages="formErrors[field.key]"
                     variant="outlined"
+                    @update:modelValue="
+                      (val) =>
+                        (formState[field.key] = field.formatter
+                          ? field.formatter(val)
+                          : val)
+                    "
                   />
                 </v-col>
               </template>

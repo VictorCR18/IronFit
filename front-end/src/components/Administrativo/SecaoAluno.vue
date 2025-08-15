@@ -6,6 +6,12 @@ import { PlanoService } from "@/api/services/PlanoService";
 import type { Aluno, Plano, Field } from "@/types/types";
 import { z } from "zod";
 
+import { useFormatters } from "@/utils/useFormatters";
+
+const { formatTelefone, unformat } = useFormatters();
+
+const isLoading = ref(true);
+
 const alunoService = new AlunoService();
 const planoService = new PlanoService();
 
@@ -37,10 +43,12 @@ async function buscarPlanos() {
 }
 
 async function salvarAluno(item: any) {
+  isLoading.value = true;
   try {
     const planoCompleto = planos.value.find((p) => p.id === item.plano);
     if (!planoCompleto) throw new Error("Plano selecionado não encontrado.");
     const payload: Aluno = { ...item, plano: planoCompleto };
+
     let alunoSalvo: Aluno;
     if (item.id) {
       alunoSalvo = await alunoService.update(payload, item.id);
@@ -52,63 +60,78 @@ async function salvarAluno(item: any) {
     }
   } catch (error) {
     console.error("Erro ao salvar aluno:", error);
+  } finally {
+    isLoading.value = false;
   }
 }
 
 async function deletarAluno(id: number) {
+  isLoading.value = true;
   try {
     await alunoService.delete(id);
     alunos.value = alunos.value.filter((a) => a.id !== id);
   } catch (error) {
     console.error("Erro ao excluir aluno:", error);
+  } finally {
+    isLoading.value = false;
   }
 }
 
 onMounted(async () => {
-  await Promise.all([buscarPlanos(), buscarAlunos()]);
+  isLoading.value = true;
+  try {
+    await buscarPlanos();
 
-  tableFields.value = [
-    {
-      key: "nome",
-      label: "Nome Completo",
-      validation: z
-        .string({ required_error: "O nome é obrigatório." })
-        .min(3, "O nome deve ter no mínimo 3 caracteres."),
-    },
-    {
-      key: "email",
-      label: "E-mail",
-      type: "text",
-      validation: z
-        .string({ required_error: "O e-mail é obrigatório." })
-        .email("Digite um e-mail válido."),
-    },
-    {
-      key: "contato",
-      label: "Contato (Telefone/WhatsApp)",
-      validation: z
-        .string({ required_error: "O contato é obrigatório." })
-        .min(10, "Digite um contato válido com DDD."),
-    },
-    {
-      key: "plano",
-      label: "Plano",
-      type: "select",
-      options: planos.value,
-      optionLabel: "nome",
-      optionValue: "id",
-      validation: z.number({
-        required_error: "Selecione um plano.",
-        invalid_type_error: "Selecione um plano.",
-      }),
-    },
-    {
-      key: "pagamento",
-      label: "Pagamento em dia",
-      type: "checkbox",
-    },
-  ];
+    tableFields.value = [
+      {
+        key: "nome",
+        label: "Nome Completo",
+        validation: z
+          .string({ required_error: "O nome é obrigatório." })
+          .min(1, "O nome deve ter no mínimo 1 caracteres."),
+      },
+      {
+        key: "email",
+        label: "E-mail",
+        type: "text",
+        validation: z
+          .string({ required_error: "O e-mail é obrigatório." })
+          .email("Digite um e-mail válido."),
+      },
+      {
+        key: "contato",
+        label: "Contato (Telefone/WhatsApp)",
+        formatter: formatTelefone,
+        validation: z
+          .string({ required_error: "O contato é obrigatório." })
+          .min(10, "Digite um contato válido com DDD."),
+      },
 
+      {
+        key: "plano",
+        label: "Plano",
+        type: "select",
+        options: planos.value,
+        optionLabel: "nome",
+        optionValue: "id",
+        validation: z.number({
+          required_error: "Selecione um plano.",
+          invalid_type_error: "Selecione um plano.",
+        }),
+      },
+      {
+        key: "pagamento",
+        label: "Pagamento em dia",
+        type: "checkbox",
+      },
+    ];
+
+    await buscarAlunos();
+  } catch (error) {
+    console.error("Erro na montagem do componente:", error);
+  } finally {
+    isLoading.value = false;
+  }
 });
 </script>
 
@@ -118,6 +141,7 @@ onMounted(async () => {
     :headers="tableHeaders"
     :items="alunos"
     :fields="tableFields"
+    :loading="isLoading"
     @save="salvarAluno"
     @delete="deletarAluno"
   />

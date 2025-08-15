@@ -7,6 +7,9 @@ import type { Aluno, Plano } from "@/types/types";
 import { useForm, useField } from "vee-validate";
 import { toTypedSchema } from "@vee-validate/zod";
 import { z } from "zod";
+import { useFormatters } from "@/utils/useFormatters";
+
+const { formatTelefone, unformat } = useFormatters();
 
 const alunoService = new AlunoService();
 const planoService = new PlanoService();
@@ -122,6 +125,7 @@ onMounted(() => {
             label="Telefone/WhatsApp"
             v-model="contato"
             :error-messages="contatoError"
+            @input="contato = formatTelefone(unformat(contato))"
           />
 
           <v-select
