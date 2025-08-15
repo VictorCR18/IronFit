@@ -3,18 +3,52 @@ import { PlanoService } from "@/api/services/PlanoService";
 import type { Plano } from "@/types/types";
 import { onMounted, ref } from "vue";
 
+// Firebase
+import { db } from "@/firebase/firebase";
+import { collection, getDocs } from "firebase/firestore";
+
 const planoService = new PlanoService();
 
 const planos = ref<Plano[]>([]);
 const erro = ref(false);
 
-async function carregarPlanos() {
+// Fallback Firebase
+async function buscarPlanosFirebase(): Promise<Plano[]> {
   try {
-    planos.value = await planoService.list();
+    const planosCollection = collection(db, "planos");
+    const snapshot = await getDocs(planosCollection);
+    return snapshot.docs.map(docSnap => {
+      const data = docSnap.data();
+      return {
+        id: docSnap.id,
+        nome: data.nome,
+        preco: data.preco,
+        descricao: data.descricao || "",
+      } as unknown as Plano;
+    });
+  } catch (error) {
+    console.error("Erro ao buscar planos no Firebase:", error);
+    return [];
+  }
+}
+
+async function carregarPlanos() {
+  erro.value = false;
+  try {
+    // Tenta buscar do backend
+    const backendPlanos = await planoService.list();
+    if (backendPlanos.length > 0) {
+      planos.value = backendPlanos;
+    } else {
+      // Se backend retornar vazio, fallback Firebase
+      planos.value = await buscarPlanosFirebase();
+    }
     if (planos.value.length === 0) erro.value = true;
   } catch (e) {
-    console.error("Erro ao carregar planos:", e);
-    erro.value = true;
+    console.warn("Backend indisponível, buscando planos no Firebase...");
+    // Fallback Firebase
+    planos.value = await buscarPlanosFirebase();
+    if (planos.value.length === 0) erro.value = true;
   }
 }
 
@@ -35,7 +69,7 @@ onMounted(() => {
       </v-alert>
     </v-col>
 
-    <v-col cols="12" md="4" v-for="p in planos" :key="p.nome" v-else>
+    <v-col cols="12" md="4" v-for="p in planos" :key="p.id" v-else>
       <v-card class="text-center pa-4 text-nowrap">
         <v-card-title>{{ p.nome || "Sem informações" }}</v-card-title>
         <v-card-text class="text-h5 font-weight-bold ma-0 pa-0">
