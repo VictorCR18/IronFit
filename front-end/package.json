@@ -16,6 +16,7 @@
     "@mdi/font": "7.4.47",
     "@vee-validate/zod": "4.9.6",
     "axios": "^1.11.0",
+    "firebase": "^12.1.0",
     "jsog-typescript": "^1.0.0-1",
     "pinia": "^3.0.3",
     "vee-validate": "^4.15.1",

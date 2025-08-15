@@ -5,10 +5,19 @@ import { AlunoService } from "@/api/services/AlunoService";
 import { PlanoService } from "@/api/services/PlanoService";
 import type { Aluno, Plano, Field } from "@/types/types";
 import { z } from "zod";
-
 import { useFormatters } from "@/utils/useFormatters";
 
-const { formatTelefone, unformat } = useFormatters();
+import { db } from "@/firebase/firebase";
+import {
+  collection,
+  addDoc,
+  getDocs,
+  doc,
+  setDoc,
+  deleteDoc,
+} from "firebase/firestore";
+
+const { formatTelefone } = useFormatters();
 
 const isLoading = ref(true);
 
@@ -26,37 +35,141 @@ const tableHeaders = [
 ];
 const tableFields = ref<Field[]>([]);
 
+// ---------- Firebase Fallback ----------
+
+async function buscarAlunosFirebase(): Promise<Aluno[]> {
+  try {
+    const alunosCollection = collection(db, "alunos");
+    const snapshot = await getDocs(alunosCollection);
+    return snapshot.docs.map((docSnap) => {
+      const data = docSnap.data();
+      return {
+        id: docSnap.id,
+        nome: data.nome,
+        email: data.email,
+        contato: data.contato,
+        plano: { id: null, nome: data.plano } as unknown as Plano,
+        pagamento: false,
+      } as unknown as Aluno;
+    });
+  } catch (error) {
+    console.error("Erro ao buscar alunos no Firebase:", error);
+    return [];
+  }
+}
+
+async function buscarPlanosFirebase(): Promise<Plano[]> {
+  try {
+    const planosCollection = collection(db, "planos");
+    const snapshot = await getDocs(planosCollection);
+    return snapshot.docs.map((docSnap) => {
+      const data = docSnap.data();
+      return {
+        id: docSnap.id,
+        nome: data.nome,
+        preco: data.preco,
+        descricao: data.descricao || "",
+      } as unknown as Plano;
+    });
+  } catch (error) {
+    console.error("Erro ao buscar planos no Firebase:", error);
+    return [];
+  }
+}
+
+async function salvarNoFirebase(aluno: Aluno) {
+  try {
+    if (aluno.id) {
+      const alunoRef = doc(db, "alunos", aluno.id.toString());
+      await setDoc(alunoRef, {
+        nome: aluno.nome,
+        email: aluno.email,
+        contato: aluno.contato,
+        plano:
+          typeof aluno.plano === "object" && aluno.plano !== null
+            ? aluno.plano.nome
+            : aluno.plano,
+        pagamento: aluno.pagamento || false,
+        timestamp: new Date(),
+      });
+    } else {
+      const alunosCollection = collection(db, "alunos");
+      await addDoc(alunosCollection, {
+        nome: aluno.nome,
+        email: aluno.email,
+        contato: aluno.contato,
+        plano:
+          typeof aluno.plano === "object" && aluno.plano !== null
+            ? aluno.plano.nome
+            : aluno.plano,
+        pagamento: aluno.pagamento || false,
+        timestamp: new Date(),
+      });
+    }
+    console.log("Aluno salvo no Firebase com sucesso!");
+  } catch (error) {
+    console.error("Erro ao salvar aluno no Firebase:", error);
+  }
+}
+
+async function deletarNoFirebase(id: string) {
+  try {
+    const alunoRef = doc(db, "alunos", id);
+    await deleteDoc(alunoRef);
+    console.log("Aluno deletado no Firebase:", id);
+  } catch (error) {
+    console.error("Erro ao deletar aluno no Firebase:", error);
+  }
+}
+
+// ---------- Backend / Fallback ----------
+
 async function buscarAlunos() {
   try {
     alunos.value = await alunoService.list();
-  } catch (error) {
-    console.error("Erro ao buscar alunos:", error);
+  } catch (backendError) {
+    console.warn("Backend indisponível, buscando alunos no Firebase...");
+    alunos.value = await buscarAlunosFirebase();
   }
 }
 
 async function buscarPlanos() {
   try {
     planos.value = await planoService.list();
-  } catch (error) {
-    console.error("Erro ao buscar planos:", error);
+  } catch (backendError) {
+    console.warn("Backend indisponível, buscando planos no Firebase...");
+    planos.value = await buscarPlanosFirebase();
   }
 }
 
 async function salvarAluno(item: any) {
   isLoading.value = true;
   try {
-    const planoCompleto = planos.value.find((p) => p.id === item.plano);
-    if (!planoCompleto) throw new Error("Plano selecionado não encontrado.");
+    const planoCompleto = planos.value.find((p) => p.id === item.plano) || {
+      nome: item.plano,
+    };
     const payload: Aluno = { ...item, plano: planoCompleto };
 
-    let alunoSalvo: Aluno;
     if (item.id) {
-      alunoSalvo = await alunoService.update(payload, item.id);
-      const idx = alunos.value.findIndex((a) => a.id === item.id);
-      if (idx !== -1) alunos.value[idx] = alunoSalvo;
+      try {
+        const alunoSalvo = await alunoService.update(payload, item.id);
+        const idx = alunos.value.findIndex((a) => a.id === item.id);
+        if (idx !== -1) alunos.value[idx] = alunoSalvo;
+      } catch (backendError) {
+        console.warn("Backend indisponível, salvando aluno no Firebase...");
+        await salvarNoFirebase(payload);
+        const idx = alunos.value.findIndex((a) => a.id === item.id);
+        if (idx !== -1) alunos.value[idx] = payload;
+      }
     } else {
-      alunoSalvo = await alunoService.create(payload);
-      alunos.value.push(alunoSalvo);
+      try {
+        const alunoSalvo = await alunoService.create(payload);
+        alunos.value.push(alunoSalvo);
+      } catch (backendError) {
+        console.warn("Backend indisponível, salvando aluno no Firebase...");
+        await salvarNoFirebase(payload);
+        alunos.value.push(payload);
+      }
     }
   } catch (error) {
     console.error("Erro ao salvar aluno:", error);
@@ -65,13 +178,19 @@ async function salvarAluno(item: any) {
   }
 }
 
-async function deletarAluno(id: number) {
+async function deletarAluno(id: number | string) {
   isLoading.value = true;
   try {
-    await alunoService.delete(id);
-    alunos.value = alunos.value.filter((a) => a.id !== id);
+    try {
+      await alunoService.delete(Number(id));
+      alunos.value = alunos.value.filter((a) => a.id !== Number(id));
+    } catch (backendError) {
+      console.warn("Backend indisponível, deletando aluno no Firebase...");
+      await deletarNoFirebase(id.toString());
+      alunos.value = alunos.value.filter((a) => a.id !== id);
+    }
   } catch (error) {
-    console.error("Erro ao excluir aluno:", error);
+    console.error("Erro ao deletar aluno:", error);
   } finally {
     isLoading.value = false;
   }
@@ -88,7 +207,7 @@ onMounted(async () => {
         label: "Nome Completo",
         validation: z
           .string({ required_error: "O nome é obrigatório." })
-          .min(1, "O nome deve ter no mínimo 1 caracteres."),
+          .min(1),
       },
       {
         key: "email",
@@ -96,7 +215,7 @@ onMounted(async () => {
         type: "text",
         validation: z
           .string({ required_error: "O e-mail é obrigatório." })
-          .email("Digite um e-mail válido."),
+          .email(),
       },
       {
         key: "contato",
@@ -104,20 +223,23 @@ onMounted(async () => {
         formatter: formatTelefone,
         validation: z
           .string({ required_error: "O contato é obrigatório." })
-          .min(10, "Digite um contato válido com DDD."),
+          .min(10),
       },
-
       {
         key: "plano",
         label: "Plano",
         type: "select",
-        options: planos.value,
+        options: planos.value.map((p) => ({
+          id: p.id ?? p.nome, 
+          nome: p.nome,
+        })),
         optionLabel: "nome",
         optionValue: "id",
-        validation: z.number({
-          required_error: "Selecione um plano.",
-          invalid_type_error: "Selecione um plano.",
-        }),
+        validation: z
+          .union([z.number(), z.string()])
+          .refine((val) => val !== null && val !== undefined, {
+            message: "Selecione um plano.",
+          }),
       },
       {
         key: "pagamento",

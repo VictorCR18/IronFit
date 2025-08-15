@@ -139,6 +139,7 @@ function confirmarExclusao() {
           variant="elevated"
           class="mr-4"
           color="primary"
+          :disabled="props.loading"
           @click="abrirAdicionar"
         >
           Adicionar
